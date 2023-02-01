@@ -3,12 +3,15 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Post,
   Render,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AppService } from './app.service';
 import { RegisterDto } from './register.dto';
+import User from './user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Controller()
 export class AppController {
@@ -24,7 +27,14 @@ export class AppController {
   }
 
   @Post('/register')
-  register(@Body() registerDto: RegisterDto) {
+  async register(@Body() registerDto: RegisterDto) {
+    if (
+      !registerDto.email ||
+      !registerDto.password ||
+      !registerDto.passwordAgain
+    ) {
+      throw new BadRequestException('Fill all boxes');
+    }
     if (!registerDto.email.includes('@')) {
       throw new BadRequestException('Email must conatin a @ character');
     }
@@ -36,5 +46,14 @@ export class AppController {
         'The password must be at least characters long',
       );
     }
+
+    const userRepo = this.dataSource.getRepository(User);
+    const user = new User();
+    user.id = undefined;
+    user.email = registerDto.email;
+    user.password = await bcrypt.hash(registerDto.password, 15);
+    await userRepo.save(user);
+
+    return user;
   }
 }
