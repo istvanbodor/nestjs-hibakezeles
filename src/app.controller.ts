@@ -43,7 +43,7 @@ export class AppController {
     }
     if (registerDto.password.length < 8) {
       throw new BadRequestException(
-        'The password must be at least characters long',
+        'The password must be at least  characters long',
       );
     }
 
